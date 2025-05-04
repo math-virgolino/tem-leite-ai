@@ -3,9 +3,12 @@ from app.extensions import db, login_manager
 from config import Config
 from sqlalchemy import event
 from sqlite3 import Connection as SQLite3Connection
+from flask_migrate import Migrate
+
 
 def create_app():
     app = Flask(__name__)
+    migrate = Migrate(app, db)
     
     # Carregar as configurações do arquivo config.py
     app.config.from_object(Config)

@@ -1,7 +1,7 @@
 from flask import render_template, redirect, url_for, flash, request
 from flask_login import login_user, logout_user, login_required, current_user
 from app.extensions import db
-from app.models import User, Doacao
+from app.models import User, Doacao, Mensagem
 from math import radians, sin, cos, sqrt, atan2
 import requests
 from datetime import datetime
@@ -209,3 +209,28 @@ def init_routes(app):
                 return redirect(url_for('cadastrar_doacao'))
 
         return render_template('cadastrar_doacao.html')
+    
+    @app.route('/enviar_mensagem/<int:destinatario_id>', methods=['GET', 'POST'])
+    @login_required
+    def enviar_mensagem(destinatario_id):
+        destinatario = User.query.get_or_404(destinatario_id)
+        if request.method == 'POST':
+            conteudo = request.form.get('conteudo')
+            if not conteudo:
+                flash('A mensagem não pode estar vazia.', 'danger')
+                return redirect(url_for('enviar_mensagem', destinatario_id=destinatario_id))
+
+            mensagem = Mensagem(remetente_id=current_user.id, destinatario_id=destinatario_id, conteudo=conteudo)
+            db.session.add(mensagem)
+            db.session.commit()
+            flash('Mensagem enviada com sucesso!', 'success')
+            return redirect(url_for('caixa_de_entrada'))
+
+        return render_template('enviar_mensagem.html', destinatario=destinatario)
+
+    @app.route('/caixa_de_entrada')
+    @login_required
+    def caixa_de_entrada():
+        mensagens_recebidas = Mensagem.query.filter_by(destinatario_id=current_user.id).order_by(Mensagem.timestamp.desc()).all()
+        mensagens_enviadas = Mensagem.query.filter_by(remetente_id=current_user.id).order_by(Mensagem.timestamp.desc()).all()
+        return render_template('caixa_de_entrada.html', recebidas=mensagens_recebidas, enviadas=mensagens_enviadas)

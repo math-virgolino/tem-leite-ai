@@ -36,3 +36,17 @@ class Doacao(db.Model):
 
     def __repr__(self):
         return f"Doacao('{self.doador.username}', '{self.data_doacao}', '{self.quantidade}')"
+    
+class Mensagem(db.Model):
+    __tablename__ = 'mensagem'
+    id = db.Column(db.Integer, primary_key=True)
+    remetente_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    destinatario_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    conteudo = db.Column(db.Text, nullable=False)
+    timestamp = db.Column(db.DateTime, nullable=False, default=db.func.current_timestamp())
+
+    remetente = db.relationship('User', foreign_keys=[remetente_id], backref='mensagens_enviadas')
+    destinatario = db.relationship('User', foreign_keys=[destinatario_id], backref='mensagens_recebidas')
+
+    def __repr__(self):
+        return f"Mensagem('{self.remetente.username}', '{self.destinatario.username}', '{self.timestamp}')"
